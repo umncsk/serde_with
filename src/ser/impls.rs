@@ -1,10 +1,12 @@
 use super::*;
 use crate::{formats::Strictness, rust::StringWithSeparator, Separator};
+use internal::{DurationSigned, Sign};
+use serde::ser::Error;
 use std::{
     collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque},
     fmt::Display,
     hash::{BuildHasher, Hash},
-    time::Duration,
+    time::{Duration, SystemTime},
 };
 
 impl<T, U> SerializeAs<Box<T>> for Box<U>
@@ -405,5 +407,116 @@ where
         } else {
             &s[..]
         })
+    }
+}
+
+impl<STRICTNESS> SerializeAs<SystemTime> for TimestampSeconds<u64, STRICTNESS>
+where
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let dur = source
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map_err(Error::custom)?;
+        DurationSeconds::<u64, STRICTNESS>::serialize_as(&dur, serializer)
+    }
+}
+
+impl<STRICTNESS> SerializeAs<SystemTime> for TimestampSeconds<i64, STRICTNESS>
+where
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let dur = match source.duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(dur) => DurationSigned {
+                sign: Sign::Positive,
+                duration: dur,
+            },
+            Err(err) => DurationSigned {
+                sign: Sign::Negative,
+                duration: err.duration(),
+            },
+        };
+        DurationSeconds::<i64, STRICTNESS>::serialize_as(&dur, serializer)
+    }
+}
+
+impl<STRICTNESS> SerializeAs<SystemTime> for TimestampSeconds<f64, STRICTNESS>
+where
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let dur = match source.duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(dur) => DurationSigned {
+                sign: Sign::Positive,
+                duration: dur,
+            },
+            Err(err) => DurationSigned {
+                sign: Sign::Negative,
+                duration: err.duration(),
+            },
+        };
+        DurationSeconds::<f64, STRICTNESS>::serialize_as(&dur, serializer)
+    }
+}
+
+impl<STRICTNESS> SerializeAs<SystemTime> for TimestampSeconds<String, STRICTNESS>
+where
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let dur = match source.duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(dur) => DurationSigned {
+                sign: Sign::Positive,
+                duration: dur,
+            },
+            Err(err) => DurationSigned {
+                sign: Sign::Negative,
+                duration: err.duration(),
+            },
+        };
+        DurationSeconds::<String, STRICTNESS>::serialize_as(&dur, serializer)
+    }
+}
+
+impl<STRICTNESS> SerializeAs<SystemTime> for TimestampSecondsWithFrac<f64, STRICTNESS>
+where
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let dur = source
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map_err(Error::custom)?;
+        DurationSecondsWithFrac::<f64, STRICTNESS>::serialize_as(&dur, serializer)
+    }
+}
+
+impl<STRICTNESS> SerializeAs<SystemTime> for TimestampSecondsWithFrac<String, STRICTNESS>
+where
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let dur = source
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .map_err(Error::custom)?;
+        DurationSecondsWithFrac::<String, STRICTNESS>::serialize_as(&dur, serializer)
     }
 }

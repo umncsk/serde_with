@@ -209,6 +209,7 @@ mod flatten_maybe;
 pub mod formats;
 #[cfg(feature = "hex")]
 pub mod hex;
+mod internal;
 #[cfg(feature = "json")]
 pub mod json;
 pub mod rust;
@@ -863,6 +864,20 @@ pub struct DurationSeconds<
 /// [feature flag]: https://docs.rs/serde_with/1.5.0-alpha.2/serde_with/guide/feature_flags/index.html
 #[derive(Copy, Clone, Debug, Default)]
 pub struct DurationSecondsWithFrac<
+    FORMAT: formats::Format = f64,
+    STRICTNESS: formats::Strictness = formats::Strict,
+>(PhantomData<(FORMAT, STRICTNESS)>);
+
+/// TODO
+#[derive(Copy, Clone, Debug, Default)]
+pub struct TimestampSeconds<
+    FORMAT: formats::Format = u64,
+    STRICTNESS: formats::Strictness = formats::Strict,
+>(PhantomData<(FORMAT, STRICTNESS)>);
+
+/// TODO
+#[derive(Copy, Clone, Debug, Default)]
+pub struct TimestampSecondsWithFrac<
     FORMAT: formats::Format = f64,
     STRICTNESS: formats::Strictness = formats::Strict,
 >(PhantomData<(FORMAT, STRICTNESS)>);
