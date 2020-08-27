@@ -826,3 +826,157 @@ fn string_with_separator() {
         serde_json::to_string(&x).unwrap()
     );
 }
+
+#[test]
+fn test_timestamp_seconds() {
+    use std::time::{Duration, SystemTime};
+    let zero = Duration::new(0, 0);
+    let one_second = Duration::new(1, 0);
+    let half_second = Duration::new(0, 500_000_000);
+
+    #[serde_as]
+    #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    struct StructIntStrict {
+        #[serde_as(as = "DurationSeconds")]
+        value: Duration,
+    };
+
+    is_equal(StructIntStrict { value: zero }, r#"{"value":0}"#);
+    is_equal(StructIntStrict { value: one_second }, r#"{"value":1}"#);
+    check_serialization(StructIntStrict { value: half_second }, r#"{"value":1}"#);
+    check_error_deserialization::<StructIntStrict>(
+        r#"{"value":"1"}"#,
+        r#"invalid type: string "1", expected u64 at line 1 column 12"#,
+    );
+    check_error_deserialization::<StructIntStrict>(
+        r#"{"value":-1}"#,
+        r#"invalid value: integer `-1`, expected u64 at line 1 column 11"#,
+    );
+
+    // #[serde_as]
+    // #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    // struct StructIntFlexible {
+    //     #[serde_as(as = "DurationSeconds<u64, Flexible>")]
+    //     value: Duration,
+    // };
+
+    // is_equal(StructIntFlexible { value: zero }, r#"{"value":0}"#);
+    // is_equal(StructIntFlexible { value: one_second }, r#"{"value":1}"#);
+    // check_serialization(StructIntFlexible { value: half_second }, r#"{"value":1}"#);
+    // check_deserialization(
+    //     StructIntFlexible { value: half_second },
+    //     r#"{"value":"0.5"}"#,
+    // );
+    // check_deserialization(StructIntFlexible { value: one_second }, r#"{"value":"1"}"#);
+    // check_deserialization(StructIntFlexible { value: zero }, r#"{"value":"0"}"#);
+    // check_error_deserialization::<StructIntFlexible>(
+    //     r#"{"value":"a"}"#,
+    //     r#"invalid value: string "a", expected an integer, a float, or a string containing a number at line 1 column 12"#,
+    // );
+    // check_error_deserialization::<StructIntFlexible>(
+    //     r#"{"value":-1}"#,
+    //     r#"Negative values are not supported for Duration. Found -1 at line 1 column 11"#,
+    // );
+
+    // #[serde_as]
+    // #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    // struct Structf64Strict {
+    //     #[serde_as(as = "DurationSeconds<f64>")]
+    //     value: Duration,
+    // };
+
+    // is_equal(Structf64Strict { value: zero }, r#"{"value":0.0}"#);
+    // is_equal(Structf64Strict { value: one_second }, r#"{"value":1.0}"#);
+    // check_serialization(Structf64Strict { value: half_second }, r#"{"value":1.0}"#);
+    // check_deserialization(Structf64Strict { value: one_second }, r#"{"value":0.5}"#);
+    // check_error_deserialization::<Structf64Strict>(
+    //     r#"{"value":"1"}"#,
+    //     r#"invalid type: string "1", expected f64 at line 1 column 12"#,
+    // );
+    // check_error_deserialization::<Structf64Strict>(
+    //     r#"{"value":-1.0}"#,
+    //     r#"underflow when converting float to duration at line 1 column 14"#,
+    // );
+
+    // #[serde_as]
+    // #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    // struct Structf64Flexible {
+    //     #[serde_as(as = "DurationSeconds<f64, Flexible>")]
+    //     value: Duration,
+    // };
+
+    // is_equal(Structf64Flexible { value: zero }, r#"{"value":0.0}"#);
+    // is_equal(Structf64Flexible { value: one_second }, r#"{"value":1.0}"#);
+    // check_serialization(Structf64Flexible { value: half_second }, r#"{"value":1.0}"#);
+    // check_deserialization(
+    //     Structf64Flexible { value: half_second },
+    //     r#"{"value":"0.5"}"#,
+    // );
+    // check_deserialization(Structf64Flexible { value: one_second }, r#"{"value":"1"}"#);
+    // check_deserialization(Structf64Flexible { value: zero }, r#"{"value":"0"}"#);
+    // check_error_deserialization::<Structf64Flexible>(
+    //     r#"{"value":"a"}"#,
+    //     r#"invalid value: string "a", expected an integer, a float, or a string containing a number at line 1 column 12"#,
+    // );
+    // check_error_deserialization::<Structf64Flexible>(
+    //     r#"{"value":-1}"#,
+    //     r#"Negative values are not supported for Duration. Found -1 at line 1 column 11"#,
+    // );
+
+    // #[serde_as]
+    // #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    // struct StructStringStrict {
+    //     #[serde_as(as = "DurationSeconds<String>")]
+    //     value: Duration,
+    // };
+
+    // is_equal(StructStringStrict { value: zero }, r#"{"value":"0"}"#);
+    // is_equal(StructStringStrict { value: one_second }, r#"{"value":"1"}"#);
+    // check_serialization(
+    //     StructStringStrict { value: half_second },
+    //     r#"{"value":"1"}"#,
+    // );
+    // check_error_deserialization::<StructStringStrict>(
+    //     r#"{"value":1}"#,
+    //     // TODO the error message should not talk about "json object"
+    //     r#"invalid type: integer `1`, expected valid json object at line 1 column 10"#,
+    // );
+    // check_error_deserialization::<StructStringStrict>(
+    //     r#"{"value":-1}"#,
+    //     r#"invalid type: integer `-1`, expected valid json object at line 1 column 11"#,
+    // );
+
+    // #[serde_as]
+    // #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    // struct StructStringFlexible {
+    //     #[serde_as(as = "DurationSeconds<String, Flexible>")]
+    //     value: Duration,
+    // };
+
+    // is_equal(StructStringFlexible { value: zero }, r#"{"value":"0"}"#);
+    // is_equal(
+    //     StructStringFlexible { value: one_second },
+    //     r#"{"value":"1"}"#,
+    // );
+    // check_serialization(
+    //     StructStringFlexible { value: half_second },
+    //     r#"{"value":"1"}"#,
+    // );
+    // check_deserialization(
+    //     StructStringFlexible { value: half_second },
+    //     r#"{"value":"0.5"}"#,
+    // );
+    // check_deserialization(
+    //     StructStringFlexible { value: one_second },
+    //     r#"{"value":"1"}"#,
+    // );
+    // check_deserialization(StructStringFlexible { value: zero }, r#"{"value":"0"}"#);
+    // check_error_deserialization::<StructStringFlexible>(
+    //     r#"{"value":"a"}"#,
+    //     r#"invalid value: string "a", expected an integer, a float, or a string containing a number at line 1 column 12"#,
+    // );
+    // check_error_deserialization::<StructStringFlexible>(
+    //     r#"{"value":-1}"#,
+    //     r#"Negative values are not supported for Duration. Found -1 at line 1 column 11"#,
+    // );
+}

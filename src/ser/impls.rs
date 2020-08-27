@@ -410,21 +410,6 @@ where
     }
 }
 
-impl<STRICTNESS> SerializeAs<SystemTime> for TimestampSeconds<u64, STRICTNESS>
-where
-    STRICTNESS: Strictness,
-{
-    fn serialize_as<S>(source: &SystemTime, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let dur = source
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .map_err(Error::custom)?;
-        DurationSeconds::<u64, STRICTNESS>::serialize_as(&dur, serializer)
-    }
-}
-
 impl<STRICTNESS> SerializeAs<SystemTime> for TimestampSeconds<i64, STRICTNESS>
 where
     STRICTNESS: Strictness,

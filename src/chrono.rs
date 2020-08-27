@@ -8,7 +8,7 @@ use crate::{
     de::DeserializeAs,
     formats::{Flexible, Format, Strict, Strictness},
     ser::SerializeAs,
-    utils, DurationSeconds, DurationSecondsWithFrac,
+    utils, DurationSeconds, DurationSecondsWithFrac, TimestampSeconds, TimestampSecondsWithFrac,
 };
 use chrono_crate::{DateTime, Duration, NaiveDateTime, Utc};
 use serde::{
@@ -486,5 +486,79 @@ where
         D: Deserializer<'de>,
     {
         deserializer.deserialize_any(DurationVisitorFlexible)
+    }
+}
+
+impl<TZ, STRICTNESS> SerializeAs<DateTime<TZ>> for TimestampSeconds<i64, STRICTNESS>
+where
+    TZ: chrono_crate::offset::TimeZone,
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &DateTime<TZ>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // TODO check rounding behavior
+        serializer.serialize_i64(source.timestamp())
+    }
+}
+
+impl<TZ, STRICTNESS> SerializeAs<DateTime<TZ>> for TimestampSeconds<f64, STRICTNESS>
+where
+    TZ: chrono_crate::offset::TimeZone,
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &DateTime<TZ>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // TODO check rounding behavior
+        serializer.serialize_f64(source.timestamp() as f64)
+    }
+}
+
+impl<TZ, STRICTNESS> SerializeAs<DateTime<TZ>> for TimestampSeconds<String, STRICTNESS>
+where
+    TZ: chrono_crate::offset::TimeZone,
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &DateTime<TZ>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // TODO check rounding behavior
+        serializer.serialize_str(&source.timestamp().to_string())
+    }
+}
+
+impl<TZ, STRICTNESS> SerializeAs<DateTime<TZ>> for TimestampSecondsWithFrac<f64, STRICTNESS>
+where
+    TZ: chrono_crate::offset::TimeZone,
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &DateTime<TZ>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let ts =
+            source.timestamp() as f64 + (source.timestamp_nanos() * NANOS_PER_SEC as i64) as f64;
+        // TODO check rounding behavior
+        serializer.serialize_f64(ts)
+    }
+}
+
+impl<TZ, STRICTNESS> SerializeAs<DateTime<TZ>> for TimestampSecondsWithFrac<String, STRICTNESS>
+where
+    TZ: chrono_crate::offset::TimeZone,
+    STRICTNESS: Strictness,
+{
+    fn serialize_as<S>(source: &DateTime<TZ>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let ts =
+            source.timestamp() as f64 + (source.timestamp_nanos() * NANOS_PER_SEC as i64) as f64;
+        // TODO check rounding behavior
+        serializer.serialize_str(&ts.to_string())
     }
 }

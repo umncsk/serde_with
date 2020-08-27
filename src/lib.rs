@@ -871,7 +871,7 @@ pub struct DurationSecondsWithFrac<
 /// TODO
 #[derive(Copy, Clone, Debug, Default)]
 pub struct TimestampSeconds<
-    FORMAT: formats::Format = u64,
+    FORMAT: formats::Format = i64,
     STRICTNESS: formats::Strictness = formats::Strict,
 >(PhantomData<(FORMAT, STRICTNESS)>);
 
